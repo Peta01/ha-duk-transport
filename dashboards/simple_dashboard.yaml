@@ -1,0 +1,73 @@
+# Alternative simple dashboard without custom cards
+# Jednoduchá verze dashboardu bez custom karet
+
+title: DUK Transport - Jednoduchá verze
+views:
+  - title: Odjezdy
+    icon: mdi:bus
+    cards:
+      # Hlavní karta s informacemi
+      - type: entities
+        title: "🚌 Odjezdová tabule DUK"
+        show_header_toggle: false
+        entities:
+          - entity: sensor.duk_transport_zastávka_12345
+            name: "Aktuální stav"
+            icon: mdi:bus-clock
+          - type: section
+          - entity: sensor.duk_transport_next_departure
+            name: "Další odjezd"
+            icon: mdi:clock-outline
+          - type: attribute
+            entity: sensor.duk_transport_zastávka_12345
+            attribute: stop_name
+            name: "Zastávka"
+          - type: attribute
+            entity: sensor.duk_transport_zastávka_12345
+            attribute: count
+            name: "Počet odjezdů"
+
+      # Markdown tabulka s odjezdy
+      - type: markdown
+        title: "📋 Seznam odjezdů"
+        content: |
+          {% set departures = state_attr('sensor.duk_transport_zastávka_12345', 'departures') or [] %}
+          {% if departures %}
+          | Linka | Směr | Čas | Zpoždění | Nástupiště |
+          |-------|------|-----|----------|------------|
+          {% for departure in departures %}
+          | **{{ departure.line }}** | {{ departure.destination }} | {{ departure.departure_time }} | {% if departure.delay > 0 %}+{{ departure.delay }} min{% else %}načas{% endif %} | {{ departure.platform or '-' }} |
+          {% endfor %}
+          {% else %}
+          **Žádné odjezdy k dispozici**
+          {% endif %}
+          
+          *Aktualizováno: {{ as_timestamp(states.sensor.duk_transport_zastávka_12345.last_updated) | timestamp_custom('%H:%M:%S') }}*
+
+      # Ovládací prvky
+      - type: vertical-stack
+        cards:
+          - type: entities
+            title: "⚙️ Nastavení"
+            entities:
+              - entity: input_text.duk_stop_id
+              - entity: input_number.duk_max_departures
+              - entity: input_number.duk_update_interval
+          
+          - type: horizontal-stack
+            cards:
+              - type: button
+                name: "Aktualizovat"
+                icon: mdi:refresh
+                tap_action:
+                  action: call-service
+                  service: homeassistant.update_entity
+                  target:
+                    entity_id: sensor.duk_transport_zastávka_12345
+              
+              - type: button  
+                name: "Informace"
+                icon: mdi:information
+                tap_action:
+                  action: more-info
+                  entity: sensor.duk_transport_zastávka_12345

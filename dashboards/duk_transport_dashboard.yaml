@@ -1,0 +1,112 @@
+# Lovelace Dashboard - Odjezdová tabule DUK
+# Přidejte tento obsah do vašeho Lovelace dashboard
+
+title: Odjezdová tabule - Doprava Ústeckého kraje
+views:
+  - title: Odjezdy
+    icon: mdi:bus-clock
+    cards:
+      # Hlavní odjezdová tabule
+      - type: vertical-stack
+        cards:
+          # Header s názvem zastávky
+          - type: markdown
+            content: |
+              # 🚌 Odjezdová tabule
+              **{{ state_attr('sensor.duk_transport_zastávka_12345', 'stop_name') or 'Zastávka DUK' }}**
+              
+              *Aktualizováno: {{ as_timestamp(states.sensor.duk_transport_zastávka_12345.last_updated) | timestamp_custom('%H:%M:%S') }}*
+
+          # Aktuální stav
+          - type: entities
+            show_header_toggle: false
+            entities:
+              - entity: sensor.duk_transport_zastávka_12345
+                name: "Aktuální stav"
+                icon: mdi:bus-clock
+              - entity: sensor.duk_transport_next_departure
+                name: "Další odjezd"
+                icon: mdi:clock-outline
+
+          # Tabulka s odjezdy
+          - type: custom:auto-entities
+            card:
+              type: entities
+              title: "📋 Aktuální odjezdy"
+              show_header_toggle: false
+            filter:
+              template: |
+                {% set departures = state_attr('sensor.duk_transport_zastávka_12345', 'departures') or [] %}
+                {% set entities = [] %}
+                {% for departure in departures[:10] %}
+                  {% set delay_icon = 'mdi:clock-alert' if departure.delay > 0 else 'mdi:clock-check' %}
+                  {% set delay_text = '+' + departure.delay|string + ' min' if departure.delay > 0 else 'načas' %}
+                  {% set entities = entities + [{
+                    'entity': 'sensor.duk_transport_zastávka_12345',
+                    'name': departure.line + ' → ' + departure.destination,
+                    'secondary_info': departure.departure_time + ' (' + delay_text + ')',
+                    'icon': delay_icon
+                  }] %}
+                {% endfor %}
+                {{ entities }}
+
+      # Statistiky a informace
+      - type: horizontal-stack
+        cards:
+          - type: statistic
+            entity: sensor.duk_transport_zastávka_12345
+            name: "Celkem odjezdů"
+            stat_type: state
+            
+          - type: gauge
+            entity: sensor.duk_transport_next_departure
+            name: "Další odjezd za"
+            min: 0
+            max: 60
+            severity:
+              green: 10
+              yellow: 5
+              red: 0
+
+      # Nastavení a ovládání
+      - type: vertical-stack
+        title: "⚙️ Nastavení"
+        cards:
+          - type: entities
+            entities:
+              - entity: input_text.duk_stop_id
+                name: "ID zastávky"
+              - entity: input_number.duk_max_departures
+                name: "Počet odjezdů"
+              - entity: input_number.duk_update_interval
+                name: "Interval aktualizace"
+              
+          - type: button
+            name: "Aktualizovat data"
+            tap_action:
+              action: call-service
+              service: homeassistant.update_entity
+              target:
+                entity_id: sensor.duk_transport_zastávka_12345
+
+  # Druhá stránka - detailní informace
+  - title: Detail
+    icon: mdi:information-outline
+    cards:
+      - type: markdown
+        content: |
+          ## 📊 Detailní informace o odjezdech
+          
+          ### Aktuální data:
+          - **Zastávka:** {{ state_attr('sensor.duk_transport_zastávka_12345', 'stop_name') }}
+          - **ID zastávky:** {{ state_attr('sensor.duk_transport_zastávka_12345', 'stop_id') }}
+          - **Počet odjezdů:** {{ state_attr('sensor.duk_transport_zastávka_12345', 'count') }}
+          - **Poslední aktualizace:** {{ as_timestamp(states.sensor.duk_transport_zastávka_12345.last_updated) | timestamp_custom('%d.%m.%Y %H:%M:%S') }}
+
+      # Raw data pro debugging
+      - type: entities
+        title: "🔧 Technické informace"
+        entities:
+          - entity: sensor.duk_transport_zastávka_12345
+            attribute: departures
+            name: "Raw data odjezdů"
