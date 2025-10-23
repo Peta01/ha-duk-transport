@@ -8,6 +8,7 @@
     "iot_class": "cloud_polling",
     "issue_tracker": "https://github.com/Peta01/ha-duk-transport/issues",
     "requirements": ["aiohttp>=3.8.0"],
-    "version": "1.1.0",
-    "config_flow": true
+    "version": "1.1.1",
+    "config_flow": true,
+    "loggers": ["custom_components.duk_transport"]
 }

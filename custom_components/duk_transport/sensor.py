@@ -156,8 +156,24 @@ class DUKTransportSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def icon(self) -> str:
-        """Return the icon of the sensor."""
-        return "mdi:bus-clock"
+        """Return the icon of the sensor based on next departure."""
+        if not self.coordinator.data:
+            return "mdi:bus-stop"
+        
+        next_departure = self.coordinator.data[0] if self.coordinator.data else None
+        if next_departure:
+            vehicle_type = next_departure.get("vehicle_type", "bus")
+            delay = next_departure.get("delay", 0)
+            
+            # Different icons based on vehicle type and delay
+            if vehicle_type == "tram":
+                return "mdi:tram" if delay == 0 else "mdi:tram-alert"
+            elif vehicle_type == "train":
+                return "mdi:train" if delay == 0 else "mdi:train-alert"
+            else:  # bus or default
+                return "mdi:bus-clock" if delay == 0 else "mdi:bus-alert"
+        
+        return "mdi:bus-stop"
 
     @property
     def available(self) -> bool:
