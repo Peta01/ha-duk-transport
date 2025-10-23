@@ -8,7 +8,7 @@ from typing import Dict, List, Optional, Any
 _LOGGER = logging.getLogger(__name__)
 
 class DUKTransportAPI:
-    """API client for DUK Transport."""
+    """API client for DUK Transport (Buses, Trains, Ships)."""
 
     def __init__(self, session: aiohttp.ClientSession):
         """Initialize the API client."""
@@ -219,3 +219,175 @@ class DUKTransportAPI:
             _LOGGER.debug(f"Could not get station info for {stop_id}: {e}")
             
         return None
+
+    async def get_cis_departures(self, stop_id: str, post_id: str = "999", max_departures: int = 10) -> List[Dict[str, Any]]:
+        """Get departures from CIS API (trains and ships)."""
+        try:
+            # Use CIS endpoint format: /cis/GetStationDeparturesWCount/{node}/{post}/{count}/{line}
+            endpoint = f"/cis/GetStationDeparturesWCount/{stop_id}/{post_id}/{max_departures}/0"
+            url = f"{self.base_url}{endpoint}"
+            
+            _LOGGER.debug(f"Requesting CIS API: {url}")
+            
+            async with self.session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    departures = self._parse_cis_response(data, stop_id)
+                    _LOGGER.info(f"Successfully fetched {len(departures)} CIS departures")
+                    return departures[:max_departures]
+                else:
+                    _LOGGER.warning(f"CIS API returned status {response.status}")
+                    return []
+                    
+        except Exception as e:
+            _LOGGER.error(f"Error fetching CIS departures: {e}")
+            return []
+
+    def _parse_cis_response(self, data: Dict[str, Any], stop_id: str) -> List[Dict[str, Any]]:
+        """Parse CIS API response for trains and ships."""
+        departures = []
+        
+        if not isinstance(data, dict) or 'DeparturesList' not in data:
+            _LOGGER.debug("No CIS departures found")
+            return departures
+            
+        departures_list = data.get('DeparturesList', [])
+        station_name = data.get('StationName', 'Unknown')
+        
+        _LOGGER.debug(f"Parsing {len(departures_list)} CIS departures from: {station_name}")
+        
+        for departure in departures_list:
+            try:
+                # Parse delay
+                delay_str = departure.get('Delay', '0:00:00')
+                delay_minutes = self._parse_delay_to_minutes(delay_str)
+                
+                # Get times
+                departure_time = departure.get('DepartureDT', '')
+                scheduled_time = departure.get('TODepartureDT', departure_time)
+                
+                # Clean up direction
+                direction = departure.get('Direction', 'Unknown')
+                direction = self._fix_encoding(direction)
+                
+                # Determine vehicle type based on line name, station context, and carrier
+                line_name = departure.get('LineName', '')
+                carrier = departure.get('Carrier', '')
+                vehicle_type = self._determine_vehicle_type(line_name, station_name, carrier)
+                
+                departures.append({
+                    'line': line_name,
+                    'destination': direction,
+                    'departure_time': self._format_time(departure_time),
+                    'scheduled_time': self._format_time(scheduled_time),
+                    'delay': delay_minutes,
+                    'delay_string': delay_str,
+                    'platform': departure.get('Platform', ''),
+                    'vehicle_type': vehicle_type,
+                    'carrier': departure.get('Carrier', 'Unknown')
+                })
+                
+            except Exception as e:
+                _LOGGER.warning(f"Error parsing CIS departure: {e}")
+                continue
+                
+        return departures
+
+    def _determine_vehicle_type(self, line_name: str, station_name: str, carrier: str = "") -> str:
+        """Determine vehicle type from line name, station context, and carrier."""
+        from .const import CITY_TRANSPORT_LINES, TRANSPORT_TYPE_BUS, TRANSPORT_TYPE_TRAIN
+        
+        line_name = line_name.upper()
+        station_name = station_name.lower()
+        carrier = carrier.strip()
+        
+        # Ships - check for harbor/port indicators
+        if any(word in station_name for word in ['přístaviště', 'přístav', 'pÅÃ­staviÅ¡tÄ', 'pÅÃ­stav']):
+            return 'ship'
+        
+        # Trains - common train line prefixes in Czech Republic
+        train_prefixes = ['R', 'EX', 'SC', 'IC', 'EC', 'RJ', 'EN', 'OS', 'SP']
+        for prefix in train_prefixes:
+            if line_name.startswith(prefix):
+                return 'train'
+        
+        # City-specific detection using configured line numbers
+        for city_key, city_data in CITY_TRANSPORT_LINES.items():
+            if city_data["carrier"] == carrier:
+                # Check if line matches any of the configured lines for this carrier
+                if line_name in city_data["lines"]:
+                    return city_data["type"]
+        
+        # Fallback patterns for carriers without specific line configuration
+        carrier_lower = carrier.lower()
+        
+        # Teplice - MD Teplice (additional fallback)
+        if 'md teplice' in carrier_lower:
+            # According to official schema: 101-109 trolleybus, 110+119 bus
+            if line_name in ['101', '102', '103', '104', '105', '106', '107', '108', '109']:
+                return 'trolleybus'
+            elif line_name in ['110', '119']:
+                return TRANSPORT_TYPE_BUS
+            return 'trolleybus'  # Default for MD Teplice
+        
+        # Most-Litvínov trams - DPMML  
+        if 'dpmml' in carrier_lower:
+            return 'tram'
+        
+        # Ústí nad Labem - DPMÚL (lanovka a trolejbusy)
+        if 'dpmúl' in carrier_lower or 'dpmãl' in carrier_lower:
+            # Lanovka má linku 901
+            if line_name == '901':
+                return 'funicular'
+            return 'trolleybus'  # Ostatní linky jsou trolejbusy/autobusy
+        
+        # Chomutov trolleybuses - DPCHJ
+        if 'dpchj' in carrier_lower:
+            return 'trolleybus'
+        
+        # Specific line patterns (general fallback)
+        if line_name.startswith('T'):  # Trolleybus lines often start with T
+            return 'trolleybus'
+        
+        # Default based on line number ranges (last resort)
+        if line_name.isdigit():
+            line_num = int(line_name)
+            if line_num >= 400:  # High numbers = intercity buses
+                return TRANSPORT_TYPE_BUS
+        
+        # Default to train for CIS data, bus for DUK data
+        return TRANSPORT_TYPE_TRAIN
+
+    async def get_stations_list(self, endpoint: str = "duk") -> List[Dict[str, Any]]:
+        """Get list of all stations from specified endpoint."""
+        try:
+            url = f"{self.base_url}/{endpoint}/GetStations"
+            _LOGGER.debug(f"Requesting stations list: {url}")
+            
+            async with self.session.get(url, timeout=aiohttp.ClientTimeout(total=30)) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    stations = []
+                    
+                    if isinstance(data, dict) and 'ItemList' in data:
+                        for station in data['ItemList']:
+                            name = self._fix_encoding(station.get('Name', ''))
+                            stations.append({
+                                'node': station.get('Node'),
+                                'post': station.get('Post'),
+                                'name': name,
+                                'latitude': station.get('Latitude', 0.0),
+                                'longitude': station.get('Longitude', 0.0),
+                                'zone': station.get('Zone', ''),
+                                'endpoint': endpoint
+                            })
+                    
+                    _LOGGER.info(f"Retrieved {len(stations)} stations from {endpoint}")
+                    return stations
+                else:
+                    _LOGGER.warning(f"Failed to get stations list: {response.status}")
+                    return []
+                    
+        except Exception as e:
+            _LOGGER.error(f"Error fetching stations list: {e}")
+            return []

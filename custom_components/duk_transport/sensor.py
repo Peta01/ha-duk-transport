@@ -26,6 +26,14 @@ from .const import (
     ATTR_PLATFORM,
     ATTR_VEHICLE_TYPE,
     DEFAULT_UPDATE_INTERVAL,
+    DUK_ENDPOINT,
+    CIS_ENDPOINT,
+    TRANSPORT_TYPE_BUS,
+    TRANSPORT_TYPE_TROLLEYBUS,
+    TRANSPORT_TYPE_TRAM,
+    TRANSPORT_TYPE_TRAIN,
+    TRANSPORT_TYPE_SHIP,
+    TRANSPORT_TYPE_FUNICULAR,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -43,9 +51,11 @@ async def async_setup_entry(
     stop_name = config_entry.data.get("stop_name", f"Zastávka {stop_id}")
     update_interval = config_entry.data.get("update_interval", DEFAULT_UPDATE_INTERVAL)
     max_departures = config_entry.data.get("max_departures", 10)
+    endpoint_type = config_entry.data.get("endpoint_type", DUK_ENDPOINT)
+    post_id = config_entry.data.get("post_id", "1")
 
     coordinator = DUKTransportCoordinator(
-        hass, api, stop_id, update_interval, max_departures
+        hass, api, stop_id, update_interval, max_departures, endpoint_type, post_id
     )
 
     await coordinator.async_config_entry_first_refresh()
@@ -64,11 +74,15 @@ class DUKTransportCoordinator(DataUpdateCoordinator):
         stop_id: str,
         update_interval: int,
         max_departures: int,
+        endpoint_type: str = DUK_ENDPOINT,
+        post_id: str = "1",
     ) -> None:
         """Initialize."""
         self.api = api
         self.stop_id = stop_id
         self.max_departures = max_departures
+        self.endpoint_type = endpoint_type
+        self.post_id = post_id
 
         super().__init__(
             hass,
@@ -80,7 +94,12 @@ class DUKTransportCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self) -> List[Dict[str, Any]]:
         """Fetch data from API endpoint."""
         try:
-            return await self.api.get_departures(self.stop_id, self.max_departures)
+            if self.endpoint_type == CIS_ENDPOINT:
+                return await self.api.get_cis_departures(
+                    self.stop_id, self.post_id, self.max_departures
+                )
+            else:
+                return await self.api.get_departures(self.stop_id, self.max_departures)
         except Exception as err:
             raise UpdateFailed(f"Error communicating with API: {err}")
 
@@ -95,8 +114,10 @@ class DUKTransportSensor(CoordinatorEntity, SensorEntity):
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
-        self._attr_name = f"DUK Transport {stop_name}"
-        self._attr_unique_id = f"duk_transport_{config_entry.data['stop_id']}"
+        endpoint_type = config_entry.data.get("endpoint_type", DUK_ENDPOINT)
+        transport_name = "CIS" if endpoint_type == CIS_ENDPOINT else "DUK"
+        self._attr_name = f"{transport_name} Transport {stop_name}"
+        self._attr_unique_id = f"duk_transport_{endpoint_type}_{config_entry.data['stop_id']}"
         self._stop_id = config_entry.data["stop_id"]
         self._stop_name = stop_name
 
@@ -163,8 +184,11 @@ class DUKTransportSensor(CoordinatorEntity, SensorEntity):
     @property
     def icon(self) -> str:
         """Return the icon of the sensor based on next departure."""
-        # Always show DUK transport icon
         if not self.coordinator.data:
+            # Default icon based on coordinator endpoint type
+            if hasattr(self.coordinator, 'endpoint_type'):
+                if self.coordinator.endpoint_type == CIS_ENDPOINT:
+                    return "mdi:train"
             return "mdi:bus"
         
         next_departure = self.coordinator.data[0] if self.coordinator.data else None
@@ -173,10 +197,16 @@ class DUKTransportSensor(CoordinatorEntity, SensorEntity):
             delay = next_departure.get("delay", 0)
             
             # Different icons based on vehicle type and delay
-            if vehicle_type == "tram":
-                return "mdi:tram" if delay == 0 else "mdi:tram-alert"
-            elif vehicle_type == "train":
+            if vehicle_type == TRANSPORT_TYPE_SHIP:
+                return "mdi:ferry" if delay == 0 else "mdi:ferry-alert"
+            elif vehicle_type == TRANSPORT_TYPE_TRAIN:
                 return "mdi:train" if delay == 0 else "mdi:train-alert"
+            elif vehicle_type == TRANSPORT_TYPE_TRAM:
+                return "mdi:tram" if delay == 0 else "mdi:tram-alert"
+            elif vehicle_type == TRANSPORT_TYPE_TROLLEYBUS:
+                return "mdi:bus-electric" if delay == 0 else "mdi:bus-electric-alert"
+            elif vehicle_type == TRANSPORT_TYPE_FUNICULAR:
+                return "mdi:gondola" if delay == 0 else "mdi:gondola"  # Cable car / lanovka
             else:  # bus or default
                 return "mdi:bus-clock" if delay == 0 else "mdi:bus-alert"
         

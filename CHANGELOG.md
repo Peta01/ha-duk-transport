@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-10-23
+
+### 🚀 Added
+- **Multi-modal transport support** - podpora 6 typů dopravních prostředků
+- **CIS API integrace** - nové API pro městskou dopravu a vlaky  
+- **Inteligentní detekce vozidel** podle dopravce a čísla linky
+- **Nové typy vozidel:**
+  - 🚎 Trolejbusy (včetně parciálních)
+  - 🚋 Tramvaje  
+  - 🚠 Funicular/lanovka (Větruše)
+  - 🚢 Lodě (Labská plavební)
+  - 🚆 Vlaky (automatická detekce)
+- **Comprehensive city coverage:**
+  - Teplice (MD Teplice) - trolejbusy 101-109, autobusy 110, 119
+  - Most-Litvínov (DPMML) - tramvaje 1-4, 40
+  - Ústí nad Labem (DPMÚL) - trolejbusy 70-88, 43, 46 + lanovka 901
+  - Chomutov-Jirkov (DPCHJ) - trolejbusy 340-353, autobusy 302-317
+- **Dynamické ikony** pro každý typ vozidla (`mdi:gondola` pro lanovku!)
+- **Carrier attribute** v odjezdech pro identifikaci dopravce
+- **Post ID konfigurace** pro CIS API endpoint
+
+### 🔧 Improved
+- Robustnější parsing API odpovědí
+- Lepší error handling pro různé API endpointy
+- Optimalizovaná detekce typu vozidla
+- Aktualizovaná dokumentace s příklady stanic
+- Komprehensivní dokumentace včetně troubleshootingu
+
+### 🐛 Fixed
+- Encoding issues s českými znaky
+- Parsing časů z různých formátů API
+- Handling prázdných odpovědí API
+
+### 🤖 Development
+- Projekt vyvinut s asistencí GitHub Copilot pro rychlejší a kvalitnější vývoj
+
 ## [1.1.5] - 2025-10-23
 
 ### Added

@@ -4,18 +4,19 @@
   <img src="https://github.com/Peta01/ha-duk-transport/raw/master/custom_components/duk_transport/assets/logo.png" alt="DUK Logo" width="200"/>
 </p>
 
-Integrace pro zobrazení odjezdových tabulí Dopravy Ústeckého kraje v Home Assistant.
+**Komplexní integrace pro odjezdové tabule v Ústeckém kraji** - podporuje autobusy, trolejbusy, tramvaje, vlaky, lodě i lanovku! 🚌🚎🚋🚆🚢🚠
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
 [![GitHub release](https://img.shields.io/github/release/Peta01/ha-duk-transport.svg)](https://github.com/Peta01/ha-duk-transport/releases)
 
 ## 🌟 Funkce
 
-- 🚌 **Aktuální odjezdy** z libovolné zastávky DUK
-- ⏰ **Informace o zpožděních** v reálném čase
-- 🔄 **Automatické aktualizace** s konfigurovatelným intervalem
-- 🎨 **Přizpůsobitelný dashboard** s odjezdovou tabulí
-- 🔔 **Notifikace** při větších zpožděních
+- 🚌 **Multi-modal transport** - autobusy, trolejbusy, tramvaje, vlaky, lodě, lanovka
+- ⏰ **Aktuální odjezdy** s informacemi o zpožděních v reálném čase
+- 🏙️ **Pokrytí celého kraje** - Teplice, Most, Litvínov, Ústí n.L., Chomutov, Jirkov
+- � **Inteligentní detekce** typu vozidla podle dopravce a linky
+- � **Duální API podpora** - DUK (regionální) + CIS (městské + vlaky)
+- 🎨 **Dynamické ikony** pro každý typ dopravního prostředku
 - 🧪 **Mock data** pro testování bez API připojení
 
 ## 🚀 Rychlá instalace
@@ -45,16 +46,31 @@ Po instalaci přidejte integraci:
 1. **Nastavení** → **Zařízení a služby** → **+ PŘIDAT INTEGRACI**
 2. Vyhledejte **"DUK Transport"**
 3. Zadejte konfiguraci:
-   - **ID zastávky**: Číselné ID zastávky DUK
+   - **ID zastávky**: Číselné ID zastávky
    - **Název zastávky**: Volitelný popisný název
+   - **Typ API**: `DUK` (regionální) nebo `CIS` (městská doprava + vlaky)
+   - **Post ID**: Pro CIS API (obvykle `1` nebo `999`)
    - **Interval aktualizace**: Jak často aktualizovat data (sekundy)
    - **Maximální počet odjezdů**: Kolik odjezdů zobrazit
+
+### 🚌 Příklady stanic
+
+#### DUK API (regionální autobusy)
+- **2950**: Krupka, ke Kateřině 
+- **2957**: Krupka, Bohosudov, Lindnerova
+
+#### CIS API (městská doprava)
+- **1578**: Teplice (trolejbusy MD Teplice)
+- **1967**: Most-Litvínov (tramvaje DPMML) 
+- **12140**: Ústí n.L., Větruše (lanovka DPMÚL)
+- **2427**: Labská plavební (lodě)
 
 ### Testovací konfigurace
 
 Pro testování použijte:
 - **ID zastávky**: `12345`
 - **Název**: `Test zastávka`
+- **API typ**: `DUK`
 - **Interval**: `60` sekund
 - **Max odjezdy**: `10`
 
@@ -104,7 +120,25 @@ content: |
 - `departure_time` - Čas odjezdu (HH:MM)
 - `delay` - Zpoždění v minutách
 - `platform` - Nástupiště
-- `vehicle_type` - Typ vozidla
+- `vehicle_type` - Typ vozidla (`bus`, `trolleybus`, `tram`, `train`, `ship`, `funicular`)
+- `carrier` - Název dopravce (MD Teplice, DPMML, DPMÚL, DPCHJ)
+
+## 🚌 Podporované dopravní systémy
+
+### 🚎 Trolejbusy
+- **Teplice** (MD Teplice): Linky 101-109 (parciální trolejbusy), 110+119 (autobusy)
+- **Ústí nad Labem** (DPMÚL): Linky 70-88, 43, 46
+- **Chomutov-Jirkov** (DPCHJ): Linky 340-353 (trolejbusy), 302-317 (autobusy)
+
+### 🚋 Tramvaje  
+- **Most-Litvínov** (DPMML): Linky 1-4 (denní), 40 (noční)
+
+### 🚠 Speciální doprava
+- **Lanovka Větruše** (DPMÚL): Linka 901 (funicular)
+- **Labská plavební**: Lodní spoje po Labi
+
+### 🚆 Vlaky
+- **Automatická detekce** vlakových linek (R, EX, SC, IC, EC, RJ, EN, OS, SP)
 
 ## 🤝 Přispívání
 
@@ -127,9 +161,10 @@ Tento projekt je licencován pod MIT licencí - viz [LICENSE](LICENSE) soubor.
 ## 🏆 Poděkování
 
 - [Home Assistant](https://www.home-assistant.io/) za úžasnou platformu
-- [Doprava Ústeckého kraje](https://www.duk.cz/) za API
-- Všem přispěvovatelům ❤️
+- [Doprava Ústeckého kraje](https://www.duk.cz/) za poskytnutí API
+- [GitHub Copilot](https://github.com/features/copilot) 🤖 za asistenci při vývoji
+- Všem přispěvovatelům a testerům ❤️
 
 ---
 
-**Vytvořeno s 💚 pro Home Assistant komunitu**
+**Vytvořeno s 💚 pro Home Assistant komunitu • Powered by GitHub Copilot 🤖**
