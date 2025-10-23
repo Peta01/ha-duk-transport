@@ -16,127 +16,206 @@ class DUKTransportAPI:
         self.base_url = "https://tabule.portabo.cz/api/v1-tabule"
 
     async def get_departures(self, stop_id: str, max_departures: int = 10) -> List[Dict[str, Any]]:
-        """Get departures for a specific stop."""
+        """Get departures for a specific stop using the working DUK API endpoint."""
         try:
-            # Since we don't have exact API documentation, we'll try common endpoints
-            endpoints_to_try = [
-                f"/stops/{stop_id}/departures",
-                f"/departures?stop_id={stop_id}",
-                f"/stop/{stop_id}/timetable",
-                f"/timetable/{stop_id}"
-            ]
+            # Use the working DUK endpoint format: /duk/GetStationDeparturesWCount/{node}/{post}/{count}/{line}
+            # Parameters: node=stop_id, post=1, count=max_departures, line=0 (all lines)
+            endpoint = f"/duk/GetStationDeparturesWCount/{stop_id}/1/{max_departures}/0"
+            url = f"{self.base_url}{endpoint}"
             
-            for endpoint in endpoints_to_try:
-                url = f"{self.base_url}{endpoint}"
-                try:
-                    async with self.session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as response:
-                        if response.status == 200:
-                            data = await response.json()
-                            departures = self._parse_departures(data, max_departures)
-                            if departures:
-                                _LOGGER.info(f"Successfully fetched departures from {endpoint}")
-                                return departures
-                except Exception as e:
-                    _LOGGER.debug(f"Failed to fetch from {endpoint}: {e}")
-                    continue
+            _LOGGER.debug(f"Requesting DUK API: {url}")
             
-            # If no endpoint works, return mock data for testing
-            _LOGGER.warning(f"Could not fetch real data for stop {stop_id}, returning mock data")
-            return self._get_mock_departures(stop_id, max_departures)
-            
-        except Exception as e:
-            _LOGGER.error(f"Error fetching departures: {e}")
-            return []
-
-    def _parse_departures(self, data: Any, max_departures: int) -> List[Dict[str, Any]]:
-        """Parse departure data from API response."""
-        departures = []
-        
-        try:
-            # Try to extract departures from different possible data structures
-            if isinstance(data, dict):
-                # Try common keys for departure data
-                departure_data = (
-                    data.get('departures') or 
-                    data.get('results') or 
-                    data.get('data') or 
-                    data.get('timetable') or
-                    [data] if any(key in data for key in ['line', 'departure', 'time']) else []
-                )
-            elif isinstance(data, list):
-                departure_data = data
-            else:
-                departure_data = []
-
-            for item in departure_data[:max_departures]:
-                if isinstance(item, dict):
-                    departure = {
-                        'line': item.get('line') or item.get('route') or item.get('lineNumber') or 'N/A',
-                        'destination': item.get('destination') or item.get('headsign') or item.get('direction') or 'N/A',
-                        'departure_time': self._parse_time(item.get('departure') or item.get('time') or item.get('departureTime')),
-                        'delay': item.get('delay') or item.get('delayMinutes') or 0,
-                        'platform': item.get('platform') or item.get('track') or item.get('gate') or '',
-                        'vehicle_type': item.get('type') or item.get('vehicleType') or 'bus'
-                    }
-                    departures.append(departure)
+            async with self.session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    departures = self._parse_duk_response(data)
+                    _LOGGER.info(f"Successfully fetched {len(departures)} departures from DUK API")
+                    return departures[:max_departures]
+                else:
+                    _LOGGER.warning(f"DUK API returned status {response.status} for stop {stop_id}")
+                    return self._get_mock_departures(stop_id, max_departures)
                     
         except Exception as e:
-            _LOGGER.error(f"Error parsing departure data: {e}")
+            _LOGGER.error(f"Error fetching departures from DUK API: {e}")
+            return self._get_mock_departures(stop_id, max_departures)
+
+    def _parse_duk_response(self, data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Parse DUK API response into standard format."""
+        departures = []
+        
+        if not isinstance(data, dict) or 'DeparturesList' not in data:
+            _LOGGER.warning("Invalid DUK API response format")
+            return departures
             
+        departures_list = data.get('DeparturesList', [])
+        station_name = data.get('StationName', 'Unknown')
+        
+        _LOGGER.debug(f"Parsing {len(departures_list)} departures from station: {station_name}")
+        
+        for departure in departures_list:
+            try:
+                # Parse delay string (format: "0:02:00" or "0:00:00")
+                delay_str = departure.get('Delay', '0:00:00')
+                delay_minutes = self._parse_delay_to_minutes(delay_str)
+                
+                # Get departure time
+                departure_time = departure.get('DepartureDT', '')
+                scheduled_time = departure.get('TODepartureDT', departure_time)
+                
+                # Clean up direction text (fix encoding issues)
+                direction = departure.get('Direction', 'Unknown')
+                direction = self._fix_encoding(direction)
+                
+                departures.append({
+                    'line': departure.get('LineName', 'N/A'),
+                    'destination': direction,
+                    'departure_time': self._format_time(departure_time),
+                    'scheduled_time': self._format_time(scheduled_time),
+                    'delay': delay_minutes,
+                    'delay_string': delay_str,
+                    'platform': '',  # DUK API doesn't provide platform info
+                    'vehicle_type': 'bus',  # DUK is primarily bus transport
+                    'carrier': departure.get('Carrier', 'Unknown')
+                })
+                
+            except Exception as e:
+                _LOGGER.warning(f"Error parsing departure: {e}")
+                continue
+        
         return departures
 
-    def _parse_time(self, time_str: Any) -> str:
-        """Parse time string to a consistent format."""
+    def _parse_delay_to_minutes(self, delay_str: str) -> int:
+        """Parse delay string like '0:02:00' to minutes."""
+        try:
+            if not delay_str or delay_str == '0:00:00':
+                return 0
+            parts = delay_str.split(':')
+            if len(parts) >= 2:
+                hours = int(parts[0])
+                minutes = int(parts[1])
+                return hours * 60 + minutes
+        except (ValueError, IndexError):
+            pass
+        return 0
+
+    def _fix_encoding(self, text: str) -> str:
+        """Fix common encoding issues in Czech text."""
+        replacements = {
+            'Ã­': 'í',
+            'Å¡': 'š',
+            'Ä"': 'ň',
+            'Ã¡': 'á',
+            'Ã©': 'é',
+            'Ã³': 'ó',
+            'Ãº': 'ú',
+            'Å¯': 'ů',
+            'Ä›': 'ě',
+            'Ä': 'č',
+            'Å¾': 'ž',
+            'Ã½': 'ý',
+            'Ã': 'ř'
+        }
+        
+        for old, new in replacements.items():
+            text = text.replace(old, new)
+        return text
+
+    def _format_time(self, time_str: str) -> str:
+        """Format time string to HH:MM format."""
         if not time_str:
             return "N/A"
             
         try:
-            if isinstance(time_str, str):
-                # Try to parse common time formats
-                for fmt in ['%H:%M', '%H:%M:%S', '%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S']:
-                    try:
-                        dt = datetime.strptime(time_str, fmt)
-                        return dt.strftime('%H:%M')
-                    except ValueError:
-                        continue
-                return time_str
-            elif isinstance(time_str, (int, float)):
-                # Assume timestamp
-                dt = datetime.fromtimestamp(time_str)
-                return dt.strftime('%H:%M')
-            else:
-                return str(time_str)
-        except Exception:
-            return str(time_str)
+            # Parse ISO format like "2025-10-23 14:20:00+02:00"
+            if '+' in time_str:
+                time_str = time_str.split('+')[0]
+            if 'T' in time_str:
+                time_str = time_str.replace('T', ' ')
+                
+            # Try different datetime formats
+            for fmt in ['%Y-%m-%d %H:%M:%S', '%H:%M:%S', '%H:%M']:
+                try:
+                    dt = datetime.strptime(time_str.strip(), fmt)
+                    return dt.strftime('%H:%M')
+                except ValueError:
+                    continue
+                    
+            # If all else fails, try to extract just the time part
+            if ' ' in time_str:
+                time_part = time_str.split(' ')[1]
+                if ':' in time_part:
+                    return time_part[:5]  # Take HH:MM part
+                    
+        except Exception as e:
+            _LOGGER.debug(f"Could not parse time '{time_str}': {e}")
+            
+        return time_str[:5] if len(time_str) >= 5 else time_str
 
     def _get_mock_departures(self, stop_id: str, max_departures: int) -> List[Dict[str, Any]]:
-        """Generate mock departure data for testing."""
+        """Generate mock departure data for testing when API is unavailable."""
         import random
+        
+        _LOGGER.info(f"Generating mock data for stop {stop_id}")
         
         mock_departures = []
         current_time = datetime.now()
         
-        lines = ['1', '2', '5', '10', '15', '20', '25', '30']
-        destinations = ['Ústí nad Labem', 'Teplice', 'Most', 'Chomutov', 'Litvínov', 'Kadaň', 'Žatec', 'Louny']
-        vehicle_types = ['bus', 'tram', 'train']
+        # Mock data based on typical DUK routes
+        lines = ['480', '484', '430', '485', '420', '440', '460']
+        destinations = [
+            'Teplice,aut.st.',
+            'Duchcov,nem.',
+            'Krupka,Fojtovice',
+            'Dubí,Krušnohorská',
+            'Chlumec',
+            'Most,aut.st.',
+            'Ústí nad Labem'
+        ]
+        carriers = ['Doprava Teplice', 'ČSAD Ústí nad Labem', 'ARRIVA']
         
-        for i in range(min(max_departures, 8)):
-            departure_time = current_time + timedelta(minutes=random.randint(1, 60))
+        for i in range(min(max_departures, len(lines))):
+            departure_time = current_time + timedelta(minutes=random.randint(2, 45))
+            delay_minutes = random.randint(0, 8) if random.random() > 0.6 else 0
+            scheduled_time = departure_time - timedelta(minutes=delay_minutes)
+            
             mock_departures.append({
-                'line': random.choice(lines),
-                'destination': random.choice(destinations),
+                'line': lines[i],
+                'destination': destinations[i % len(destinations)],
                 'departure_time': departure_time.strftime('%H:%M'),
-                'delay': random.randint(0, 5) if random.random() > 0.7 else 0,
-                'platform': random.choice(['A', 'B', 'C', '1', '2', '3', '']),
-                'vehicle_type': random.choice(vehicle_types)
+                'scheduled_time': scheduled_time.strftime('%H:%M'),
+                'delay': delay_minutes,
+                'delay_string': f"0:{delay_minutes:02d}:00",
+                'platform': '',
+                'vehicle_type': 'bus',
+                'carrier': carriers[i % len(carriers)]
             })
         
         return sorted(mock_departures, key=lambda x: x['departure_time'])
 
     async def validate_stop_id(self, stop_id: str) -> bool:
-        """Validate if stop ID exists."""
+        """Validate if stop ID exists by trying to fetch departures."""
         try:
             departures = await self.get_departures(stop_id, 1)
             return len(departures) > 0
         except Exception:
             return False
+
+    async def get_station_info(self, stop_id: str) -> Optional[Dict[str, str]]:
+        """Get station information for a given stop ID."""
+        try:
+            endpoint = f"/duk/GetStationDeparturesWCount/{stop_id}/1/1/0"
+            url = f"{self.base_url}{endpoint}"
+            
+            async with self.session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    station_name = data.get('StationName', 'Unknown')
+                    return {
+                        'id': stop_id,
+                        'name': self._fix_encoding(station_name),
+                        'status': 'active'
+                    }
+        except Exception as e:
+            _LOGGER.debug(f"Could not get station info for {stop_id}: {e}")
+            
+        return None

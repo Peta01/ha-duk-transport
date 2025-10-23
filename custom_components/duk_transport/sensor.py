@@ -108,7 +108,16 @@ class DUKTransportSensor(CoordinatorEntity, SensorEntity):
         
         next_departure = self.coordinator.data[0] if self.coordinator.data else None
         if next_departure:
-            return f"Linka {next_departure['line']} → {next_departure['destination']} ({next_departure['departure_time']})"
+            line = next_departure.get('line', 'N/A')
+            destination = next_departure.get('destination', 'Neznámý cíl')
+            departure_time = next_departure.get('departure_time', 'N/A')
+            delay = next_departure.get('delay', 0)
+            
+            # Format state with delay information
+            if delay > 0:
+                return f"Linka {line} → {destination} ({departure_time}, +{delay} min)"
+            else:
+                return f"Linka {line} → {destination} ({departure_time})"
         
         return "Žádné odjezdy"
 
@@ -129,9 +138,12 @@ class DUKTransportSensor(CoordinatorEntity, SensorEntity):
                 ATTR_LINE: departure.get("line"),
                 ATTR_DESTINATION: departure.get("destination"),
                 ATTR_DEPARTURE_TIME: departure.get("departure_time"),
+                "scheduled_time": departure.get("scheduled_time"),
                 ATTR_DELAY: departure.get("delay", 0),
+                "delay_string": departure.get("delay_string", "0:00:00"),
                 ATTR_PLATFORM: departure.get("platform", ""),
                 ATTR_VEHICLE_TYPE: departure.get("vehicle_type", "bus"),
+                "carrier": departure.get("carrier", "Unknown"),
             })
 
         return {
