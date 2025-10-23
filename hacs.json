@@ -1,0 +1,9 @@
+{
+    "name": "DUK Transport",
+    "content_in_root": false,
+    "filename": "duk_transport",
+    "country": ["CZ"],
+    "render_readme": true,
+    "zip_release": false,
+    "hide_default_branch": false
+}
