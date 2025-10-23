@@ -1,5 +1,9 @@
 # 🚌 DUK Transport - Home Assistant Integration
 
+<p align="center">
+  <img src="https://github.com/Peta01/ha-duk-transport/raw/master/custom_components/duk_transport/assets/logo.png" alt="DUK Logo" width="200"/>
+</p>
+
 Integrace pro zobrazení odjezdových tabulí Dopravy Ústeckého kraje v Home Assistant.
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)

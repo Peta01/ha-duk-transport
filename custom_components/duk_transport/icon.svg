@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <rect width="256" height="256" fill="#1f4788"/>
+  <text x="128" y="90" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="white" text-anchor="middle">DUK</text>
+  <text x="128" y="140" font-family="Arial, sans-serif" font-size="24" fill="#4CAF50" text-anchor="middle">transport</text>
+  <circle cx="64" cy="180" r="12" fill="#4CAF50"/>
+  <circle cx="128" cy="180" r="12" fill="#4CAF50"/>
+  <circle cx="192" cy="180" r="12" fill="#4CAF50"/>
+  <rect x="52" y="160" width="152" height="8" fill="white" opacity="0.8"/>
+</svg>
