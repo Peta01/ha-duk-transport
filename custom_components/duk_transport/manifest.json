@@ -2,15 +2,11 @@
     "domain": "duk_transport",
     "name": "Doprava Ústeckého kraje",
     "codeowners": ["@Peta01"],
+    "config_flow": true,
     "dependencies": [],
     "documentation": "https://github.com/Peta01/ha-duk-transport",
-    "integration_type": "service",
     "iot_class": "cloud_polling",
     "issue_tracker": "https://github.com/Peta01/ha-duk-transport/issues",
     "requirements": ["aiohttp>=3.8.0"],
-    "version": "1.1.7",
-    "config_flow": true,
-    "loggers": ["custom_components.duk_transport"],
-    "after_dependencies": [],
-    "homeassistant": "2023.1.0"
+    "version": "1.1.8"
 }
