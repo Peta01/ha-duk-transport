@@ -1,0 +1,8 @@
+{
+  "duk_transport": {
+    "name": "Doprava Ústeckého kraje",
+    "integrations": {
+      "duk_transport": {}
+    }
+  }
+}
