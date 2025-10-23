@@ -155,10 +155,17 @@ class DUKTransportSensor(CoordinatorEntity, SensorEntity):
         }
 
     @property
+    def entity_picture(self) -> str | None:
+        """Return the entity picture for this sensor."""
+        # Return None to use icon instead
+        return None
+
+    @property
     def icon(self) -> str:
         """Return the icon of the sensor based on next departure."""
+        # Always show DUK transport icon
         if not self.coordinator.data:
-            return "mdi:bus-stop"
+            return "mdi:bus"
         
         next_departure = self.coordinator.data[0] if self.coordinator.data else None
         if next_departure:
@@ -173,7 +180,7 @@ class DUKTransportSensor(CoordinatorEntity, SensorEntity):
             else:  # bus or default
                 return "mdi:bus-clock" if delay == 0 else "mdi:bus-alert"
         
-        return "mdi:bus-stop"
+        return "mdi:bus"
 
     @property
     def available(self) -> bool:
