@@ -273,7 +273,7 @@ class DUKTransportAPI:
                 # Determine vehicle type based on line name, station context, and carrier
                 line_name = departure.get('LineName', '')
                 carrier = departure.get('Carrier', '')
-                vehicle_type = self._determine_vehicle_type(line_name, station_name, carrier)
+                vehicle_type = self._determine_vehicle_type(line_name, station_name, carrier, stop_id)
                 
                 departures.append({
                     'line': line_name,
@@ -293,13 +293,17 @@ class DUKTransportAPI:
                 
         return departures
 
-    def _determine_vehicle_type(self, line_name: str, station_name: str, carrier: str = "") -> str:
-        """Determine vehicle type from line name, station context, and carrier."""
+    def _determine_vehicle_type(self, line_name: str, station_name: str, carrier: str = "", stop_id: str = "") -> str:
+        """Determine vehicle type from line name, station context, carrier, and stop ID."""
         from .const import CITY_TRANSPORT_LINES, TRANSPORT_TYPE_BUS, TRANSPORT_TYPE_TRAIN
         
         line_name = line_name.upper()
         station_name = station_name.lower()
         carrier = carrier.strip()
+        
+        # Debug logging for Teplice trolleybus issue
+        if line_name in ['101', '102', '103', '104', '105', '106', '107', '108', '109']:
+            _LOGGER.debug(f"Teplice trolejbus detection - Linka: {line_name}, Dopravce: '{carrier}', Stanice: '{station_name}', ID: {stop_id}")
         
         # Ships - check for harbor/port indicators
         if any(word in station_name for word in ['přístaviště', 'přístav', 'pÅÃ­staviÅ¡tÄ', 'pÅÃ­stav']):
@@ -321,8 +325,9 @@ class DUKTransportAPI:
         # Fallback patterns for carriers without specific line configuration
         carrier_lower = carrier.lower()
         
-        # Teplice - MD Teplice (additional fallback)
-        if 'md teplice' in carrier_lower:
+        # Teplice - MD Teplice (stanice ID 1578 nebo carrier/station obsahuje teplice/md)
+        if (stop_id == '1578' or 'md teplice' in carrier_lower or 'teplice' in carrier_lower or 
+            'teplice' in station_name or station_name == 'teplice město'):
             # According to official schema: 101-109 trolleybus, 110+119 bus
             if line_name in ['101', '102', '103', '104', '105', '106', '107', '108', '109']:
                 return 'trolleybus'
