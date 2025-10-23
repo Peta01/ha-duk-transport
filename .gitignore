@@ -69,3 +69,8 @@ htmlcov/
 
 # Development
 .vscode/settings.json
+
+# Logo files - temporary until final design
+custom_components/duk_transport/icon*.png
+custom_components/duk_transport/logo*.png
+custom_components/duk_transport/brands_files/
