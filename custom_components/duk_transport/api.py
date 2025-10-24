@@ -301,6 +301,10 @@ class DUKTransportAPI:
         station_name = station_name.lower()
         carrier = carrier.strip()
         
+        # Debug logging for ALL Teplice lines to see what's happening
+        if stop_id == '1578' or 'teplice' in station_name.lower():
+            _LOGGER.debug(f"Teplice analysis - Linka: {line_name}, Dopravce: '{carrier}', Stanice: '{station_name}', ID: {stop_id}")
+        
         # Debug logging for Teplice trolleybus issue
         if line_name in ['101', '102', '103', '104', '105', '106', '107', '108', '109']:
             _LOGGER.debug(f"Teplice trolejbus detection - Linka: {line_name}, Dopravce: '{carrier}', Stanice: '{station_name}', ID: {stop_id}")
