@@ -28,7 +28,7 @@ class DUKTransportAPI:
             async with self.session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as response:
                 if response.status == 200:
                     data = await response.json()
-                    departures = self._parse_duk_response(data)
+                    departures = self._parse_duk_response(data, stop_id)
                     _LOGGER.info(f"Successfully fetched {len(departures)} departures from DUK API")
                     return departures[:max_departures]
                 else:
@@ -39,7 +39,7 @@ class DUKTransportAPI:
             _LOGGER.error(f"Error fetching departures from DUK API: {e}")
             return self._get_mock_departures(stop_id, max_departures)
 
-    def _parse_duk_response(self, data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _parse_duk_response(self, data: Dict[str, Any], stop_id: str) -> List[Dict[str, Any]]:
         """Parse DUK API response into standard format."""
         departures = []
         
@@ -66,16 +66,21 @@ class DUKTransportAPI:
                 direction = departure.get('Direction', 'Unknown')
                 direction = self._fix_encoding(direction)
                 
+                # Determine vehicle type based on line name, station context, and carrier
+                line_name = departure.get('LineName', 'N/A')
+                carrier = departure.get('Carrier', 'Unknown')
+                vehicle_type = self._determine_vehicle_type(line_name, station_name, carrier, stop_id)
+                
                 departures.append({
-                    'line': departure.get('LineName', 'N/A'),
+                    'line': line_name,
                     'destination': direction,
                     'departure_time': self._format_time(departure_time),
                     'scheduled_time': self._format_time(scheduled_time),
                     'delay': delay_minutes,
                     'delay_string': delay_str,
                     'platform': '',  # DUK API doesn't provide platform info
-                    'vehicle_type': 'bus',  # DUK is primarily bus transport
-                    'carrier': departure.get('Carrier', 'Unknown')
+                    'vehicle_type': vehicle_type,
+                    'carrier': carrier
                 })
                 
             except Exception as e:
