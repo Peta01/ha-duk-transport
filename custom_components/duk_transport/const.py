@@ -48,12 +48,7 @@ CITY_TRANSPORT_LINES = {
         "lines": ["101", "102", "103", "104", "105", "106", "107", "108", "109"],  # Všechny parciální trolejbusy
         "type": TRANSPORT_TYPE_TROLLEYBUS
     },
-    # Teplice - autobusy (MD Teplice)
-    "teplice_bus": {
-        "carrier": "MD Teplice",
-        "lines": ["110", "119"],  # 110 běžná linka, 119 noční flamendr
-        "type": TRANSPORT_TYPE_BUS
-    },
+
     # Most-Litvínov - tramvaje (DPMML) - podle oficiálního schématu DPmML
     "most_tram": {
         "carrier": "DPMML", 
@@ -78,10 +73,5 @@ CITY_TRANSPORT_LINES = {
         "lines": ["340", "341", "350", "351", "352", "353"],  # Trolejbusové linky 340-359
         "type": TRANSPORT_TYPE_TROLLEYBUS
     },
-    # Chomutov - autobusy (DPCHJ)
-    "chomutov_bus": {
-        "carrier": "DPCHJ", 
-        "lines": ["302", "303", "304", "306", "307", "308", "309", "310", "312", "314", "316", "317"],  # Autobusové linky 300-319
-        "type": TRANSPORT_TYPE_BUS
-    }
+
 }
