@@ -26,6 +26,8 @@ from .const import (
     ATTR_PLATFORM,
     ATTR_VEHICLE_TYPE,
     ATTR_VEHICLE_EMOJI,
+    ATTR_VEHICLE_SYMBOL,
+    ATTR_VEHICLE_CHAR,
     ATTR_VEHICLE_ICON,
     DEFAULT_UPDATE_INTERVAL,
     DUK_ENDPOINT,
@@ -169,6 +171,8 @@ class DUKTransportSensor(CoordinatorEntity, SensorEntity):
                 ATTR_PLATFORM: departure.get("platform", ""),
                 ATTR_VEHICLE_TYPE: departure.get("vehicle_type", "bus"),
                 ATTR_VEHICLE_EMOJI: departure.get("vehicle_emoji", "🚌"),
+                ATTR_VEHICLE_SYMBOL: departure.get("vehicle_symbol", "[BUS]"),
+                ATTR_VEHICLE_CHAR: departure.get("vehicle_char", "B"),
                 ATTR_VEHICLE_ICON: departure.get("vehicle_icon", "mdi:bus"),
                 "carrier": departure.get("carrier", "Unknown"),
             })

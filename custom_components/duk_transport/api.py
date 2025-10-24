@@ -82,6 +82,8 @@ class DUKTransportAPI:
                     'platform': departure.get('StationPost', ''),  # Both DUK and CIS use StationPost for platform
                     'vehicle_type': vehicle_type,
                     'vehicle_emoji': self._get_vehicle_emoji(vehicle_type),
+                    'vehicle_symbol': self._get_vehicle_symbol(vehicle_type),
+                    'vehicle_char': self._get_vehicle_char(vehicle_type),
                     'vehicle_icon': self._get_vehicle_icon(vehicle_type),
                     'carrier': carrier
                 })
@@ -196,6 +198,8 @@ class DUKTransportAPI:
                 'platform': '',
                 'vehicle_type': 'bus',
                 'vehicle_emoji': self._get_vehicle_emoji('bus'),
+                'vehicle_symbol': self._get_vehicle_symbol('bus'),
+                'vehicle_char': self._get_vehicle_char('bus'),
                 'vehicle_icon': self._get_vehicle_icon('bus'),
                 'carrier': carriers[i % len(carriers)]
             })
@@ -295,6 +299,8 @@ class DUKTransportAPI:
                     'platform': departure.get('StationPost', ''),  # CIS uses StationPost for platform info
                     'vehicle_type': vehicle_type,
                     'vehicle_emoji': self._get_vehicle_emoji(vehicle_type),
+                    'vehicle_symbol': self._get_vehicle_symbol(vehicle_type),
+                    'vehicle_char': self._get_vehicle_char(vehicle_type),
                     'vehicle_icon': self._get_vehicle_icon(vehicle_type),
                     'carrier': departure.get('Carrier', 'Unknown')
                 })
@@ -368,9 +374,28 @@ class DUKTransportAPI:
         return TRANSPORT_TYPE_BUS
 
     def _get_vehicle_emoji(self, vehicle_type: str) -> str:
-        """Get emoji for vehicle type."""
-        from .const import TRANSPORT_EMOJIS
-        return TRANSPORT_EMOJIS.get(vehicle_type, "🚌")  # Default to bus emoji
+        """Get emoji for vehicle type with fallback support."""
+        from .const import TRANSPORT_EMOJIS, TRANSPORT_SYMBOLS, TRANSPORT_CHARS
+        
+        # Try emoji first
+        emoji = TRANSPORT_EMOJIS.get(vehicle_type, "🚌")
+        try:
+            # Test if emoji can be encoded (will work in most modern systems)
+            emoji.encode('utf-8')
+            return emoji
+        except UnicodeError:
+            # Fallback to ASCII symbols if emoji fails
+            return TRANSPORT_SYMBOLS.get(vehicle_type, "[BUS]")
+
+    def _get_vehicle_symbol(self, vehicle_type: str) -> str:
+        """Get ASCII-safe symbol for vehicle type."""
+        from .const import TRANSPORT_SYMBOLS
+        return TRANSPORT_SYMBOLS.get(vehicle_type, "[BUS]")
+
+    def _get_vehicle_char(self, vehicle_type: str) -> str:
+        """Get single-character symbol for vehicle type (most compatible)."""
+        from .const import TRANSPORT_CHARS
+        return TRANSPORT_CHARS.get(vehicle_type, "B")
 
     def _get_vehicle_icon(self, vehicle_type: str) -> str:
         """Get Material Design Icon for vehicle type."""

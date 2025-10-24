@@ -16,7 +16,7 @@ TRANSPORT_TYPE_TOURIST_TRAIN = "tourist_train"  # Turistické vlaky T1-T29
 TRANSPORT_TYPE_SHIP = "ship"
 TRANSPORT_TYPE_FUNICULAR = "funicular"  # Cable car / lanovka
 
-# Transport emojis for UI display
+# Transport emojis for UI display (with fallback support)
 TRANSPORT_EMOJIS = {
     TRANSPORT_TYPE_BUS: "🚌",
     TRANSPORT_TYPE_TROLLEYBUS: "🚎", 
@@ -25,6 +25,28 @@ TRANSPORT_EMOJIS = {
     TRANSPORT_TYPE_TOURIST_TRAIN: "🚂",  # Parní lokomotiva pro turistické vlaky
     TRANSPORT_TYPE_SHIP: "⛴️",
     TRANSPORT_TYPE_FUNICULAR: "🚠"
+}
+
+# ASCII fallback symbols (for systems without emoji support)
+TRANSPORT_SYMBOLS = {
+    TRANSPORT_TYPE_BUS: "[BUS]",
+    TRANSPORT_TYPE_TROLLEYBUS: "[TROL]", 
+    TRANSPORT_TYPE_TRAM: "[TRAM]",
+    TRANSPORT_TYPE_TRAIN: "[TRAIN]",
+    TRANSPORT_TYPE_TOURIST_TRAIN: "[STEAM]",  # Steam train indicator
+    TRANSPORT_TYPE_SHIP: "[SHIP]",
+    TRANSPORT_TYPE_FUNICULAR: "[CABLE]"
+}
+
+# Unicode-safe short symbols (single char, widely supported)
+TRANSPORT_CHARS = {
+    TRANSPORT_TYPE_BUS: "B",
+    TRANSPORT_TYPE_TROLLEYBUS: "T", 
+    TRANSPORT_TYPE_TRAM: "M",  # Metro/tram
+    TRANSPORT_TYPE_TRAIN: "R",  # Rail
+    TRANSPORT_TYPE_TOURIST_TRAIN: "S",  # Steam
+    TRANSPORT_TYPE_SHIP: "F",  # Ferry
+    TRANSPORT_TYPE_FUNICULAR: "C"  # Cable
 }
 
 # Material Design Icons for Home Assistant
@@ -54,6 +76,8 @@ ATTR_DELAY_STRING = "delay_string"
 ATTR_PLATFORM = "platform"
 ATTR_VEHICLE_TYPE = "vehicle_type"
 ATTR_VEHICLE_EMOJI = "vehicle_emoji"
+ATTR_VEHICLE_SYMBOL = "vehicle_symbol"
+ATTR_VEHICLE_CHAR = "vehicle_char"
 ATTR_VEHICLE_ICON = "vehicle_icon"
 ATTR_CARRIER = "carrier"
 
