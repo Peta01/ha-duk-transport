@@ -366,11 +366,16 @@ class DUKTransportAPI:
                 return 'tram'
             return TRANSPORT_TYPE_BUS  # Ostatní linky DPMML jsou autobusy (např. linka 5)
         
-        # Ústí nad Labem - DPMÚL (lanovka 901, trolejbusy ostatní)
+        # Ústí nad Labem - DPMÚL (podle oficiální mapy)
         if 'dpmúl' in carrier_lower or 'dpmãl' in carrier_lower:
             if line_name == '901':
                 return 'funicular'
-            return 'trolleybus'  # Ostatní linky jsou trolejbusy
+            # Modré linky = trolejbusy (podle mapy)
+            elif line_name in ['70', '71', '72', '73', '76', '80', '82', '84', '87', '88']:
+                return 'trolleybus'
+            # Vše ostatní = autobusy (zelené, oranžové turistické, nebo mimo mapu)
+            else:
+                return TRANSPORT_TYPE_BUS
         
         # Chomutov trolleybuses - DPCHJ
         if 'dpchj' in carrier_lower:

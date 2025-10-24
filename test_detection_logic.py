@@ -71,7 +71,12 @@ def test_vehicle_detection():
         if 'dpmúl' in carrier_lower or 'dpmãl' in carrier_lower:
             if line_name == '901':
                 return 'funicular'
-            return 'trolleybus'
+            # Modré linky = trolejbusy (podle mapy)
+            elif line_name in ['70', '71', '72', '73', '76', '80', '82', '84', '87', '88']:
+                return 'trolleybus'
+            # Vše ostatní = autobusy
+            else:
+                return TRANSPORT_TYPE_BUS
         
         # Chomutov - DPCHJ
         if 'dpchj' in carrier_lower:
@@ -112,7 +117,9 @@ def test_vehicle_detection():
         ('1', 'DPMML', 'tram', 'Most tramvaj 1'),
         ('5', 'DPMML', 'bus', 'Most autobus 5'),
         ('901', 'DPMÚL', 'funicular', 'Ústí lanovka 901'),
-        ('79', 'DPMÚL', 'trolleybus', 'Ústí trolejbus 79'),
+        ('70', 'DPMÚL', 'trolleybus', 'Ústí trolejbus 70 (modrá)'),
+        ('79', 'DPMÚL', 'bus', 'Ústí autobus 79 (zelená)'),
+        ('10', 'DPMÚL', 'bus', 'Ústí turistický autobus 10 (oranžová)'),
         ('350', 'ČSAD', 'bus', 'Meziměstský autobus 350'),
         ('801', 'Noční doprava', 'bus', 'Noční autobus 801'),
     ]
