@@ -69,7 +69,7 @@ CITY_TRANSPORT_LINES = {
     # Ústí nad Labem - trolejbusy (DPMÚL) - podle Wikipedie k 2.9.2024
     "usti_trolleybus": {
         "carrier": "DPMÚL",
-        "lines": ["70", "71", "72", "73", "76", "80", "84", "87", "88", "43", "46"],  # Denní + noční linky
+        "lines": ["70", "71", "72", "73", "76", "79", "80", "81", "83", "84", "85", "87", "88", "89", "43", "46"],  # Denní + noční linky
         "type": TRANSPORT_TYPE_TROLLEYBUS
     },
     # Chomutov - trolejbusy (DPCHJ) - podle visit.chomutov.cz

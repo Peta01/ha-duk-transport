@@ -314,15 +314,32 @@ class DUKTransportAPI:
         if line_name in ['101', '102', '103', '104', '105', '106', '107', '108', '109']:
             _LOGGER.debug(f"Teplice trolejbus detection - Linka: {line_name}, Dopravce: '{carrier}', Stanice: '{station_name}', ID: {stop_id}")
         
-        # Ships - check for harbor/port indicators
-        if any(word in station_name for word in ['přístaviště', 'přístav', 'pÅÃ­staviÅ¡tÄ', 'pÅÃ­stav']):
+        # Ships - detekce podle specifických linek (ne podle názvu stanice!)
+        if line_name == 'F1':  # F1 přívoz
             return 'ship'
+        # T90-T99 turistické lodě (ale ne T9 - to je vlak!)
+        if line_name.startswith('T') and len(line_name) > 1 and line_name[1:].isdigit():
+            t_number = int(line_name[1:])
+            if 90 <= t_number <= 99:  # T90-T99 = turistické lodě
+                return 'ship'
         
-        # Trains - common train line prefixes in Czech Republic
-        train_prefixes = ['R', 'EX', 'SC', 'IC', 'EC', 'RJ', 'EN', 'OS', 'SP']
-        for prefix in train_prefixes:
-            if line_name.startswith(prefix):
+        # Náhradní doprava - linky začínající X jsou náhradní autobusy
+        if line_name.startswith('X'):
+            return TRANSPORT_TYPE_BUS
+        
+        # Turistické linky T - podle číselných rozsahů (kromě již zpracovaných lodí)
+        if line_name.startswith('T') and len(line_name) > 1 and line_name[1:].isdigit():
+            t_number = int(line_name[1:])
+            if 1 <= t_number <= 29:  # T1-T29 = turistické vlaky
                 return 'train'
+            elif 30 <= t_number <= 89:  # T30-T89 = turistické autobusy
+                return TRANSPORT_TYPE_BUS
+            # T90-T99 už zpracováno jako lodě výše
+        
+        # Trains - detect by line prefixes (any line starting with letter, kromě již zpracovaných)
+        # Vlaky mají vždy prefix písmenu (R, EX, U, Os, Sp, IC, EC, RJ, EN atd.)
+        if line_name and line_name[0].isalpha():
+            return 'train'
         
         # City-specific detection using configured line numbers
         for city_key, city_data in CITY_TRANSPORT_LINES.items():
@@ -334,9 +351,8 @@ class DUKTransportAPI:
         # Fallback patterns for carriers without specific line configuration
         carrier_lower = carrier.lower()
         
-        # Teplice - MD Teplice (stanice ID 1578 nebo carrier/station obsahuje teplice/md)
-        if (stop_id == '1578' or 'md teplice' in carrier_lower or 'teplice' in carrier_lower or 
-            'teplice' in station_name or station_name == 'teplice město'):
+        # Teplice - MD Teplice (POUZE městská doprava trolejbusy)
+        if 'md teplice' in carrier_lower:
             # According to official schema: 101-109 trolleybus, 110+119 bus
             if line_name in ['101', '102', '103', '104', '105', '106', '107', '108', '109']:
                 return 'trolleybus'
@@ -344,33 +360,36 @@ class DUKTransportAPI:
                 return TRANSPORT_TYPE_BUS
             return 'trolleybus'  # Default for MD Teplice
         
-        # Most-Litvínov trams - DPMML  
+        # Most-Litvínov - DPMML (tramvaje: 1-4, 40; autobusy: ostatní např. 5)
         if 'dpmml' in carrier_lower:
-            return 'tram'
+            if line_name in ['1', '2', '3', '4', '40']:
+                return 'tram'
+            return TRANSPORT_TYPE_BUS  # Ostatní linky DPMML jsou autobusy (např. linka 5)
         
-        # Ústí nad Labem - DPMÚL (lanovka a trolejbusy)
+        # Ústí nad Labem - DPMÚL (lanovka 901, trolejbusy ostatní)
         if 'dpmúl' in carrier_lower or 'dpmãl' in carrier_lower:
-            # Lanovka má linku 901
             if line_name == '901':
                 return 'funicular'
-            return 'trolleybus'  # Ostatní linky jsou trolejbusy/autobusy
+            return 'trolleybus'  # Ostatní linky jsou trolejbusy
         
         # Chomutov trolleybuses - DPCHJ
         if 'dpchj' in carrier_lower:
             return 'trolleybus'
         
-        # Specific line patterns (general fallback)
-        if line_name.startswith('T'):  # Trolleybus lines often start with T
-            return 'trolleybus'
-        
-        # Default based on line number ranges (last resort)
+        # Autobusy podle číselných rozsahů (regionální linky)
         if line_name.isdigit():
             line_num = int(line_name)
-            if line_num >= 400:  # High numbers = intercity buses
+            if 1 <= line_num <= 299:  # Městské linky - závisí na dopravci
+                # Tyto linky už byly zpracovány výše podle dopravce, pokud ne -> bus
+                return TRANSPORT_TYPE_BUS
+            elif 300 <= line_num <= 799:  # Meziměstské autobusy
+                return TRANSPORT_TYPE_BUS
+            elif 800 <= line_num <= 899:  # Noční autobusy
                 return TRANSPORT_TYPE_BUS
         
-        # Default to train for CIS data, bus for DUK data
-        return TRANSPORT_TYPE_TRAIN
+        # Default: Regionální autobusy
+        # Všechno co nespadá do výše uvedených kategorií jsou regionální autobusy
+        return TRANSPORT_TYPE_BUS
 
     async def get_stations_list(self, endpoint: str = "duk") -> List[Dict[str, Any]]:
         """Get list of all stations from specified endpoint."""
