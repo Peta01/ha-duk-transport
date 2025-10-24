@@ -25,6 +25,8 @@ from .const import (
     ATTR_DELAY,
     ATTR_PLATFORM,
     ATTR_VEHICLE_TYPE,
+    ATTR_VEHICLE_EMOJI,
+    ATTR_VEHICLE_ICON,
     DEFAULT_UPDATE_INTERVAL,
     DUK_ENDPOINT,
     CIS_ENDPOINT,
@@ -32,7 +34,9 @@ from .const import (
     TRANSPORT_TYPE_TROLLEYBUS,
     TRANSPORT_TYPE_TRAM,
     TRANSPORT_TYPE_TRAIN,
+    TRANSPORT_TYPE_TOURIST_TRAIN,
     TRANSPORT_TYPE_SHIP,
+    TRANSPORT_TYPE_FUNICULAR,
     TRANSPORT_TYPE_FUNICULAR,
 )
 
@@ -164,6 +168,8 @@ class DUKTransportSensor(CoordinatorEntity, SensorEntity):
                 "delay_string": departure.get("delay_string", "0:00:00"),
                 ATTR_PLATFORM: departure.get("platform", ""),
                 ATTR_VEHICLE_TYPE: departure.get("vehicle_type", "bus"),
+                ATTR_VEHICLE_EMOJI: departure.get("vehicle_emoji", "🚌"),
+                ATTR_VEHICLE_ICON: departure.get("vehicle_icon", "mdi:bus"),
                 "carrier": departure.get("carrier", "Unknown"),
             })
 
@@ -201,6 +207,8 @@ class DUKTransportSensor(CoordinatorEntity, SensorEntity):
                 return "mdi:ferry" if delay == 0 else "mdi:ferry-alert"
             elif vehicle_type == TRANSPORT_TYPE_TRAIN:
                 return "mdi:train" if delay == 0 else "mdi:train-alert"
+            elif vehicle_type == TRANSPORT_TYPE_TOURIST_TRAIN:
+                return "mdi:steam" if delay == 0 else "mdi:steam"  # Parní lokomotiva pro turistické vlaky
             elif vehicle_type == TRANSPORT_TYPE_TRAM:
                 return "mdi:tram" if delay == 0 else "mdi:tram-alert"
             elif vehicle_type == TRANSPORT_TYPE_TROLLEYBUS:

@@ -12,8 +12,31 @@ TRANSPORT_TYPE_BUS = "bus"
 TRANSPORT_TYPE_TROLLEYBUS = "trolleybus"
 TRANSPORT_TYPE_TRAM = "tram"
 TRANSPORT_TYPE_TRAIN = "train"
+TRANSPORT_TYPE_TOURIST_TRAIN = "tourist_train"  # Turistické vlaky T1-T29
 TRANSPORT_TYPE_SHIP = "ship"
 TRANSPORT_TYPE_FUNICULAR = "funicular"  # Cable car / lanovka
+
+# Transport emojis for UI display
+TRANSPORT_EMOJIS = {
+    TRANSPORT_TYPE_BUS: "🚌",
+    TRANSPORT_TYPE_TROLLEYBUS: "🚎", 
+    TRANSPORT_TYPE_TRAM: "🚊",
+    TRANSPORT_TYPE_TRAIN: "🚆",
+    TRANSPORT_TYPE_TOURIST_TRAIN: "🚂",  # Parní lokomotiva pro turistické vlaky
+    TRANSPORT_TYPE_SHIP: "⛴️",
+    TRANSPORT_TYPE_FUNICULAR: "🚠"
+}
+
+# Material Design Icons for Home Assistant
+TRANSPORT_ICONS = {
+    TRANSPORT_TYPE_BUS: "mdi:bus",
+    TRANSPORT_TYPE_TROLLEYBUS: "mdi:bus-electric", 
+    TRANSPORT_TYPE_TRAM: "mdi:tram",
+    TRANSPORT_TYPE_TRAIN: "mdi:train",
+    TRANSPORT_TYPE_TOURIST_TRAIN: "mdi:steam",  # Parní lokomotiva pro turistické vlaky
+    TRANSPORT_TYPE_SHIP: "mdi:ferry",
+    TRANSPORT_TYPE_FUNICULAR: "mdi:gondola"
+}
 
 # Default values
 DEFAULT_UPDATE_INTERVAL = 60  # seconds
@@ -30,6 +53,8 @@ ATTR_DELAY = "delay"
 ATTR_DELAY_STRING = "delay_string"
 ATTR_PLATFORM = "platform"
 ATTR_VEHICLE_TYPE = "vehicle_type"
+ATTR_VEHICLE_EMOJI = "vehicle_emoji"
+ATTR_VEHICLE_ICON = "vehicle_icon"
 ATTR_CARRIER = "carrier"
 
 # Well-known DUK station IDs for examples

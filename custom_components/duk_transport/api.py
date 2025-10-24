@@ -81,6 +81,8 @@ class DUKTransportAPI:
                     'delay_string': delay_str,
                     'platform': departure.get('StationPost', ''),  # Both DUK and CIS use StationPost for platform
                     'vehicle_type': vehicle_type,
+                    'vehicle_emoji': self._get_vehicle_emoji(vehicle_type),
+                    'vehicle_icon': self._get_vehicle_icon(vehicle_type),
                     'carrier': carrier
                 })
                 
@@ -193,6 +195,8 @@ class DUKTransportAPI:
                 'delay_string': f"0:{delay_minutes:02d}:00",
                 'platform': '',
                 'vehicle_type': 'bus',
+                'vehicle_emoji': self._get_vehicle_emoji('bus'),
+                'vehicle_icon': self._get_vehicle_icon('bus'),
                 'carrier': carriers[i % len(carriers)]
             })
         
@@ -290,6 +294,8 @@ class DUKTransportAPI:
                     'delay_string': delay_str,
                     'platform': departure.get('StationPost', ''),  # CIS uses StationPost for platform info
                     'vehicle_type': vehicle_type,
+                    'vehicle_emoji': self._get_vehicle_emoji(vehicle_type),
+                    'vehicle_icon': self._get_vehicle_icon(vehicle_type),
                     'carrier': departure.get('Carrier', 'Unknown')
                 })
                 
@@ -301,7 +307,7 @@ class DUKTransportAPI:
 
     def _determine_vehicle_type(self, line_name: str, station_name: str, carrier: str = "", stop_id: str = "") -> str:
         """Determine vehicle type from line name, station context, carrier, and stop ID."""
-        from .const import CITY_TRANSPORT_LINES, TRANSPORT_TYPE_BUS, TRANSPORT_TYPE_TRAIN
+        from .const import CITY_TRANSPORT_LINES, TRANSPORT_TYPE_BUS, TRANSPORT_TYPE_TRAIN, TRANSPORT_TYPE_TOURIST_TRAIN
         
         line_name = line_name.upper()
         station_name = station_name.lower()
@@ -326,8 +332,8 @@ class DUKTransportAPI:
         # 2. Tourist lines T - podle číselných rozsahů (kromě lodí)
         if line_name.startswith('T') and len(line_name) > 1 and line_name[1:].isdigit():
             t_number = int(line_name[1:])
-            if 1 <= t_number <= 29:  # T1-T29 = turistické vlaky
-                return 'train'
+            if 1 <= t_number <= 29:  # T1-T29 = turistické vlaky s parní lokomotivou
+                return 'tourist_train'
             # T30-T89 = turistické autobusy, T90-T99 = lodě (already handled)
             # Rest falls through to default bus
         
@@ -360,6 +366,16 @@ class DUKTransportAPI:
         
         # 6. Everything else is bus (regional transport, replacement X lines, numeric ranges)
         return TRANSPORT_TYPE_BUS
+
+    def _get_vehicle_emoji(self, vehicle_type: str) -> str:
+        """Get emoji for vehicle type."""
+        from .const import TRANSPORT_EMOJIS
+        return TRANSPORT_EMOJIS.get(vehicle_type, "🚌")  # Default to bus emoji
+
+    def _get_vehicle_icon(self, vehicle_type: str) -> str:
+        """Get Material Design Icon for vehicle type."""
+        from .const import TRANSPORT_ICONS
+        return TRANSPORT_ICONS.get(vehicle_type, "mdi:bus")  # Default to bus icon
 
     async def get_stations_list(self, endpoint: str = "duk") -> List[Dict[str, Any]]:
         """Get list of all stations from specified endpoint."""
