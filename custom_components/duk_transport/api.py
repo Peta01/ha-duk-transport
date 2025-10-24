@@ -19,8 +19,9 @@ class DUKTransportAPI:
         """Get departures for a specific stop using the working DUK API endpoint."""
         try:
             # Use the working DUK endpoint format: /duk/GetStationDeparturesWCount/{node}/{post}/{count}/{line}
-            # Parameters: node=stop_id, post=1, count=max_departures, line=0 (all lines)
-            endpoint = f"/duk/GetStationDeparturesWCount/{stop_id}/1/{max_departures}/0"
+            # Parameters: node=stop_id, post=0, count=max_departures, line=0 (all lines)
+            # Note: post=0 provides correct platform information, post=1 shows everything as platform 1
+            endpoint = f"/duk/GetStationDeparturesWCount/{stop_id}/0/{max_departures}/0"
             url = f"{self.base_url}{endpoint}"
             
             _LOGGER.debug(f"Requesting DUK API: {url}")
@@ -208,7 +209,7 @@ class DUKTransportAPI:
     async def get_station_info(self, stop_id: str) -> Optional[Dict[str, str]]:
         """Get station information for a given stop ID."""
         try:
-            endpoint = f"/duk/GetStationDeparturesWCount/{stop_id}/1/1/0"
+            endpoint = f"/duk/GetStationDeparturesWCount/{stop_id}/0/1/0"
             url = f"{self.base_url}{endpoint}"
             
             async with self.session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as response:
@@ -225,7 +226,7 @@ class DUKTransportAPI:
             
         return None
 
-    async def get_cis_departures(self, stop_id: str, post_id: str = "999", max_departures: int = 10) -> List[Dict[str, Any]]:
+    async def get_cis_departures(self, stop_id: str, post_id: str = "0", max_departures: int = 10) -> List[Dict[str, Any]]:
         """Get departures from CIS API (trains and ships)."""
         try:
             # Use CIS endpoint format: /cis/GetStationDeparturesWCount/{node}/{post}/{count}/{line}
