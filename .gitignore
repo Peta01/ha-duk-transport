@@ -74,3 +74,6 @@ htmlcov/
 custom_components/duk_transport/icon*.png
 custom_components/duk_transport/logo*.png
 custom_components/duk_transport/brands_files/
+
+# Moje testy
+pokus.py
