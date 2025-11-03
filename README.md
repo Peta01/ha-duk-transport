@@ -82,6 +82,56 @@ Pro testování použijte:
 
 ## 📱 Dashboard
 
+### Flex Table Card (doporučeno)
+
+```yaml
+type: custom:flex-table-card
+title: 🚌 Odjezdy DUK
+entities:
+  - sensor.duk_transport_test_zastavka
+columns:
+  - name: ""
+    data: departures
+    modify: x.vehicle_emoji
+    align: center
+  - name: Linka
+    data: departures
+    modify: x.line
+    align: center
+  - name: Směr
+    data: departures
+    modify: x.destination
+    align: left
+  - name: Čas
+    data: departures
+    modify: x.departure_time
+    align: center
+  - name: Status
+    data: departures
+    modify: >-
+      x.delay > 5 ? '🔴 +' + x.delay + 'm' : x.delay > 0 ? '🟡 +' + x.delay +
+      'm' : '🟢 načas'
+    align: center
+  - name: Nástupiště
+    data: departures
+    modify: x.platform
+    align: center
+sort_by: departure_time
+max_rows: 10
+css:
+  table+: >-
+    border-collapse: collapse; width: 100%; font-family: -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  tbody tr+: "border-bottom: 1px solid #e0e0e0;"
+  tbody tr:hover+: "background-color: #f5f5f5;"
+  th+: >-
+    background: linear-gradient(135deg, #1976d2, #42a5f5); color: white;
+    padding: 12px 8px; font-weight: bold;
+  td+: "padding: 10px 8px; vertical-align: middle;"
+  td:nth-child(2)+: "font-weight: bold; color: #1976d2; font-size: 16px;"
+  td:nth-child(4)+: "font-family: monospace; font-weight: 600;"
+```
+
 ### Základní karta
 
 ```yaml
@@ -90,22 +140,6 @@ title: 🚌 Odjezdy DUK
 entities:
   - entity: sensor.duk_transport_test_zastavka
     name: Aktuální stav
-```
-
-### Odjezdová tabulka
-
-```yaml
-type: markdown
-title: 📋 Seznam odjezdů
-content: |
-  {% set departures = state_attr('sensor.duk_transport_test_zastavka', 'departures') or [] %}
-  {% if departures %}
-  | Linka | Směr | Čas | Zpoždění |
-  |-------|------|-----|----------|
-  {% for departure in departures %}
-  | **{{ departure.line }}** | {{ departure.destination }} | {{ departure.departure_time }} | {% if departure.delay > 0 %}+{{ departure.delay }} min{% else %}načas{% endif %} |
-  {% endfor %}
-  {% endif %}
 ```
 
 ## 🔍 Dostupné entity
