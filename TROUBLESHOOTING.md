@@ -27,7 +27,7 @@
 **Příčina**: Encoding problém
 **Řešení**:
 - Restartujte HA po updatu
-- Problém by měl být opravený ve v1.2.0
+- Ujistěte se, že máte nejnovější verzi integrace
 - Nahlaste pokud přetrvává
 
 ### ⚠️ "Entities neaktualizují"

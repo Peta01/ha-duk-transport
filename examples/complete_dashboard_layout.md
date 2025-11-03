@@ -361,7 +361,7 @@ cards:
     content: |
       ---
       
-      ## 📱 DUK Transport Integration v1.2.0
+      ## 📱 DUK Transport Integration
       
       **Supported transport:**
       🚌 Buses • 🚎 Trolleybuses • 🚋 Trams • 🚆 Trains • ⛴️ Ships • 🚠 Funicular

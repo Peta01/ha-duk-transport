@@ -24,7 +24,7 @@ Jasný a stručný popis toho, co se skutečně stalo.
 
 ## 📋 Prostředí
 - **Home Assistant verze**: [např. 2023.12.0]
-- **DUK Transport verze**: [např. 1.2.0]
+- **DUK Transport verze**: [např. 1.0.0]
 - **Typ stanice**: [DUK/CIS]
 - **ID stanice**: [např. 2950]
 - **Dopravce**: [např. MD Teplice]

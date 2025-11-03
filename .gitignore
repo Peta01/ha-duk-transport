@@ -68,6 +68,7 @@ copy_to_ha.bat
 copy_to_ha.sh
 generate_stations_list.py
 pokus.py
+test*.py
 
 # Temporary files
 *.tmp
