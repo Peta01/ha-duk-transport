@@ -46,14 +46,20 @@ Po instalaci přidejte integraci:
 1. **Nastavení** → **Zařízení a služby** → **+ PŘIDAT INTEGRACI**
 2. Vyhledejte **"DUK Transport"**
 3. Zadejte konfiguraci:
-   - **ID zastávky**: Číselné ID zastávky
+   - **ID zastávky**: Číselné ID zastávky (najděte v [seznamu stanic](STATIONS.md))
    - **Název zastávky**: Volitelný popisný název
    - **Typ API**: `DUK` (regionální) nebo `CIS` (městská doprava + vlaky)
    - **Post ID**: Pro CIS API (obvykle `1` nebo `999`)
    - **Interval aktualizace**: Jak často aktualizovat data (sekundy)
    - **Maximální počet odjezdů**: Kolik odjezdů zobrazit
 
-### 🚌 Příklady stanic
+### � Najděte svou zastávku
+
+**📋 [Kompletní seznam všech 7000+ zastávek](STATIONS.md)**
+
+Použijte Ctrl+F / Cmd+F pro vyhledání vaší zastávky podle názvu.
+
+### �🚌 Příklady nejběžnějších stanic
 
 #### DUK API (regionální autobusy)
 - **2950**: Krupka, ke Kateřině 

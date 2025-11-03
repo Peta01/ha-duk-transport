@@ -4,7 +4,7 @@
 
 - Home Assistant 2023.1 nebo novější
 - Přístup k internetu pro API volání
-- ID zastávky DUK (nebo použijte `12345` pro testování)
+- ID zastávky DUK - najděte v [seznamu stanic](../STATIONS.md) nebo použijte `12345` pro testování
 
 ## 🏠 Pro Synology NAS (VM)
 
@@ -26,7 +26,7 @@ cp -r custom_components/duk_transport /config/custom_components/
 1. **Nastavení** → **Zařízení a služby** → **+ PŘIDAT INTEGRACI**
 2. Vyhledejte **"Doprava Ústeckého kraje"**
 3. Zadejte:
-   - ID zastávky: `12345` (nebo vaše skutečné ID)
+   - ID zastávky: Najděte v [seznamu stanic](../STATIONS.md) nebo použijte `12345` pro test
    - Název: `Moje zastávka`
    - Interval: `60` sekund
 
