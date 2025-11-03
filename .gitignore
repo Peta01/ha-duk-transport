@@ -62,6 +62,10 @@ home-assistant_*.log
 .coverage
 htmlcov/
 .tox/
+test_*.py
+validate_config_flow.py
+copy_to_ha.bat
+copy_to_ha.sh
 
 # Temporary files
 *.tmp
