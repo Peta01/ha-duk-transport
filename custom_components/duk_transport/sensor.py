@@ -107,7 +107,18 @@ class DUKTransportCoordinator(DataUpdateCoordinator):
             else:
                 return await self.api.get_departures(self.stop_id, self.max_departures)
         except Exception as err:
-            raise UpdateFailed(f"Error communicating with API: {err}")
+            # Provide more context in error message
+            api_type = "CIS" if self.endpoint_type == CIS_ENDPOINT else "DUK"
+            hint = ""
+            if self.endpoint_type == CIS_ENDPOINT:
+                hint = f" (Post ID: {self.post_id}). Zkuste jiný Post ID (1 nebo 999) nebo typ API."
+            else:
+                hint = ". Zkontrolujte ID zastávky nebo zkuste CIS API typ."
+            
+            raise UpdateFailed(
+                f"Chyba komunikace s {api_type} API pro zastávku {self.stop_id}{hint} "
+                f"Detail: {err}. Více info: https://github.com/Peta01/ha-duk-transport/blob/master/TROUBLESHOOTING.md#-co-to-znamen%C3%A1-co-m%C3%A1m-d%C4%9Blat"
+            )
 
 class DUKTransportSensor(CoordinatorEntity, SensorEntity):
     """DUK Transport sensor."""
