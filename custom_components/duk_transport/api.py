@@ -33,11 +33,19 @@ class DUKTransportAPI:
                     _LOGGER.info(f"Successfully fetched {len(departures)} departures from DUK API")
                     return departures[:max_departures]
                 else:
-                    _LOGGER.warning(f"DUK API returned status {response.status} for stop {stop_id}")
+                    _LOGGER.warning(
+                        f"DUK API vrátilo status {response.status} pro zastávku {stop_id}. "
+                        f"Možná zastávka neexistuje nebo nemá odjezdy. "
+                        f"Zkontrolujte ID v STATIONS.md nebo zkuste CIS API."
+                    )
                     return self._get_mock_departures(stop_id, max_departures)
                     
         except Exception as e:
-            _LOGGER.error(f"Error fetching departures from DUK API: {e}")
+            _LOGGER.error(
+                f"Chyba při načítání DUK API dat: {e}. "
+                f"Zkontrolujte síťové připojení a ID zastávky {stop_id}. "
+                f"Použijí se testovací data."
+            )
             return self._get_mock_departures(stop_id, max_departures)
 
     def _parse_duk_response(self, data: Dict[str, Any], stop_id: str) -> List[Dict[str, Any]]:
@@ -45,7 +53,10 @@ class DUKTransportAPI:
         departures = []
         
         if not isinstance(data, dict) or 'DeparturesList' not in data:
-            _LOGGER.warning("Invalid DUK API response format")
+            _LOGGER.warning(
+                "Neplatný formát odpovědi DUK API. "
+                "Data neobsahují očekávanou strukturu 'DeparturesList'."
+            )
             return departures
             
         departures_list = data.get('DeparturesList', [])
@@ -89,7 +100,7 @@ class DUKTransportAPI:
                 })
                 
             except Exception as e:
-                _LOGGER.warning(f"Error parsing departure: {e}")
+                _LOGGER.warning(f"Chyba při parsování odjezdu (přeskočeno): {e}")
                 continue
         
         return departures
@@ -250,11 +261,17 @@ class DUKTransportAPI:
                     _LOGGER.info(f"Successfully fetched {len(departures)} CIS departures")
                     return departures[:max_departures]
                 else:
-                    _LOGGER.warning(f"CIS API returned status {response.status}")
+                    _LOGGER.warning(
+                        f"CIS API vrátilo status {response.status} pro zastávku {stop_id} (Post ID: {post_id}). "
+                        f"Zkuste jiný Post ID (1 nebo 999) nebo DUK API typ."
+                    )
                     return []
                     
         except Exception as e:
-            _LOGGER.error(f"Error fetching CIS departures: {e}")
+            _LOGGER.error(
+                f"Chyba při načítání CIS API dat: {e}. "
+                f"Zkontrolujte síťové připojení, ID zastávky {stop_id} a Post ID {post_id}."
+            )
             return []
 
     def _parse_cis_response(self, data: Dict[str, Any], stop_id: str) -> List[Dict[str, Any]]:
@@ -306,7 +323,7 @@ class DUKTransportAPI:
                 })
                 
             except Exception as e:
-                _LOGGER.warning(f"Error parsing CIS departure: {e}")
+                _LOGGER.warning(f"Chyba při parsování CIS odjezdu (přeskočeno): {e}")
                 continue
                 
         return departures
@@ -429,9 +446,12 @@ class DUKTransportAPI:
                     _LOGGER.info(f"Retrieved {len(stations)} stations from {endpoint}")
                     return stations
                 else:
-                    _LOGGER.warning(f"Failed to get stations list: {response.status}")
+                    _LOGGER.warning(
+                        f"Nepodařilo se načíst seznam stanic: status {response.status}. "
+                        f"API může být dočasně nedostupné."
+                    )
                     return []
                     
         except Exception as e:
-            _LOGGER.error(f"Error fetching stations list: {e}")
+            _LOGGER.error(f"Chyba při načítání seznamu stanic: {e}")
             return []

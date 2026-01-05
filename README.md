@@ -194,6 +194,7 @@ Tento projekt je licencován pod MIT licencí - viz [LICENSE](LICENSE) soubor.
 
 ## 🙋 Podpora
 
+- 🔧 **Problémy s konfigurací?** [Troubleshooting Guide](TROUBLESHOOTING.md#-co-to-znamen%C3%A1-co-m%C3%A1m-d%C4%9Blat) - vysvětlení všech chybových hlášek
 - 🐛 **Chyby**: [GitHub Issues](https://github.com/Peta01/ha-duk-transport/issues)
 - 💬 **Diskuze**: [GitHub Discussions](https://github.com/Peta01/ha-duk-transport/discussions)
 - 📖 **Dokumentace**: [Wiki](https://github.com/Peta01/ha-duk-transport/wiki)
